@@ -6,8 +6,8 @@ const path = require('path');
 
 // Create an Express application
 const app = express();
-// Set the port, use environment variable PORT or default to 3000
-const port = process.env.PORT || 3000;
+// Set the port, use environment variable PORT or default to 8080
+const port = process.env.PORT || 8080;
 
 // Configure PostgreSQL connection pool using DSN from environment variable
 const pool = new Pool({
@@ -56,12 +56,35 @@ const twittersTableQuery = `
     );
 `;
 
-// Check and create tables on application startup
-checkAndCreateTable('twitters', twittersTableQuery);
+const checkPoolConnection = async () => {
+    if (process.env.PG_DSN === undefined) {
+        console.error('Please set the environment variable PG_DSN with the PostgreSQL connection string');
+        return false;
+    }
+    try {
+        const client = await pool.connect();
+        console.log('Connected to PostgreSQL');
+        client.release();
+        return true;
+    } catch (error) {
+        console.error('Error connecting to PostgreSQL:', error);
+    }
+    return false;
+}
+
+
 
 // Route to display the list of twitters
 app.get('/', async (req, res) => {
     try {
+        if (!await checkPoolConnection()) {
+            console.error('PostgreSQL connection failed, please check your connection string in the environment variable PG_DSN');
+            return res.render('missing-pg')
+        }
+
+        // Check and create tables on application startup
+        checkAndCreateTable('twitters', twittersTableQuery);
+
         // SQL query to select all twitters ordered by creation time in descending order
         const { rows } = await pool.query('SELECT * FROM twitters ORDER BY created_at DESC');
         const twitters = [];

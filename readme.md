@@ -59,7 +59,7 @@ To start the project locally, ensure your PostgreSQL instance is running and exe
 node app.js
 ```
 
-The application will be accessible at `http://localhost:3000`.
+The application will be accessible at `http://localhost:8080`.
 
 ### Deploying on Leapcell
 
